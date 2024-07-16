@@ -1,4 +1,5 @@
 import "./style.css";
+const explosionAudio = document.getElementById("explosion");
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -28,14 +29,36 @@ class Object {
   constructor() {
     this.x = Math.floor(Math.random() * canvas.width);
     this.y = Math.floor(Math.random() * canvas.height);
-    this.size = 15;
+    this.w = 15;
+    this.h = 15;
   }
 }
 
-const o = new Object();
+class Piece {
+  constructor(x, y, vx, vy) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+  }
+}
+
+class Collision {
+  constructor(x, y) {
+    this.pieces = [
+      new Piece(x, y, 1, 1),
+      new Piece(x, y, -1, 1),
+      new Piece(x, y, 1, -1),
+      new Piece(x, y, -1, -1),
+    ];
+    this.opacity = 1;
+  }
+}
 
 const particles = [];
 const objects = [];
+
+const collisions = [];
 
 const drawPlayer = () => {
   ctx.fillStyle = "blue";
@@ -62,12 +85,55 @@ const drawParticles = () => {
 const drawObjects = () => {
   objects.forEach((o) => {
     ctx.fillStyle = "green";
-    ctx.beginPath();
-    ctx.moveTo(o.x, o.y);
-    ctx.lineTo(o.x + o.size, o.y);
-    ctx.lineTo(o.x + o.size / 2, o.y - o.size);
-    ctx.closePath();
-    ctx.fill();
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+  });
+};
+
+function RectCircleColliding(circle, rect) {
+  if (rect) {
+    const distX = Math.abs(circle.x - rect.x - rect.w / 2);
+    const distY = Math.abs(circle.y - rect.y - rect.h / 2);
+
+    if (distX > rect.w / 2 + circle.r) {
+      return false;
+    }
+    if (distY > rect.h / 2 + circle.r) {
+      return false;
+    }
+
+    if (distX <= rect.w / 2) {
+      return true;
+    }
+    if (distY <= rect.h / 2) {
+      return true;
+    }
+
+    const dx = distX - rect.w / 2;
+    const dy = distY - rect.h / 2;
+    return dx * dx + dy * dy <= circle.r * circle.r;
+  }
+
+  return false;
+}
+
+const checkCollision = () => {
+  for (let i = 0; i < objects.length; i++) {
+    for (let j = 0; j < particles.length; j++) {
+      const res = RectCircleColliding(particles[j], objects[i]);
+      if (res) {
+        collisions.push(new Collision(objects[i].x, objects[i].y));
+        objects.splice(i, 1);
+      }
+    }
+  }
+};
+
+const drawCollisions = () => {
+  collisions.forEach((c) => {
+    c.pieces.forEach((p) => {
+      ctx.fillStyle = `rgba(201, 242, 155, ${(c.opacity -= 0.01)})`;
+      ctx.fillRect((p.x += p.vx), (p.y += p.vy), 8, 8);
+    });
   });
 };
 
@@ -76,7 +142,8 @@ const frame = () => {
   drawParticles();
   drawObjects();
   drawPlayer();
-
+  checkCollision();
+  drawCollisions();
   requestAnimationFrame(frame);
 };
 
