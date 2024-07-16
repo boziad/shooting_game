@@ -137,13 +137,26 @@ const drawCollisions = () => {
   });
 };
 
+const times = [];
+let fps;
 const frame = () => {
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   drawParticles();
   drawObjects();
-  drawPlayer();
   checkCollision();
   drawCollisions();
+  drawPlayer();
+
+  const now = performance.now();
+  while (times.length > 0 && times[0] <= now - 1000) {
+    times.shift();
+  }
+  times.push(now);
+  fps = times.length;
+
+  ctx.font = "15px serif";
+  ctx.fillStyle = "#000";
+  ctx.fillText(`FPS : ${fps}`, 10, 20);
   requestAnimationFrame(frame);
 };
 
