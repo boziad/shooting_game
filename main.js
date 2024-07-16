@@ -26,8 +26,8 @@ const player = new Player(
 
 class Particle {
   constructor(oX, oY) {
-    this.x = (canvasWidth - radius) / 2;
-    this.y = (canvasHeight - radius) / 2;
+    this.x = player.x;
+    this.y = player.y;
     this.r = 2;
     this.v = 5;
     this.vectorX = -(this.x - oX);
@@ -48,8 +48,8 @@ class Object {
     this.h = 15;
     this.v = 3;
 
-    this.vectorX = -(this.x - (canvasWidth - radius) / 2);
-    this.vectorY = -(this.y - (canvasHeight - radius) / 2);
+    this.vectorX = -(this.x - player.x);
+    this.vectorY = -(this.y - player.y);
 
     this.vectorNormalized = Math.sqrt(
       this.vectorX * this.vectorX + this.vectorY * this.vectorY
@@ -167,6 +167,23 @@ const checkPlayerCollision = () => {
   }
 };
 
+const drawHealth = () => {
+  for (let i = 0; i < player.health; i++) {
+    ctx.fillStyle = "red";
+    ctx.fillRect(canvas.width - 150 + i * 25, 10, 20, 10);
+  }
+};
+
+const drawScore = () => {
+  ctx.font = "30px serif";
+  ctx.fillStyle = "#000";
+  const text = `Score : ${collisions.length}`;
+
+  const textWidth = ctx.measureText(text).width;
+
+  ctx.fillText(text, (canvasWidth - textWidth) / 2, 30);
+};
+
 const times = [];
 let fps;
 
@@ -204,6 +221,8 @@ const frame = () => {
     checkCollision();
     drawCollisions();
     checkPlayerCollision();
+    drawHealth();
+    drawScore();
     drawPlayer();
 
     drawFPS();
@@ -213,6 +232,23 @@ const frame = () => {
 
 canvas.addEventListener("click", (e) => {
   particles.push(new Particle(e.offsetX, e.offsetY));
+});
+
+addEventListener("keydown", (e) => {
+  switch (e.key) {
+    case "ArrowUp":
+      player.y -= 5;
+      break;
+    case "ArrowDown":
+      player.y += 5;
+      break;
+    case "ArrowLeft":
+      player.x -= 5;
+      break;
+    case "ArrowRight":
+      player.x += 5;
+      break;
+  }
 });
 
 setInterval(() => {
