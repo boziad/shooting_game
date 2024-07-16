@@ -9,6 +9,21 @@ const canvasHeight = canvas.height;
 
 const radius = 20;
 
+class Player {
+  constructor(x, y, r) {
+    this.x = x;
+    this.y = y;
+    this.r = r;
+    this.health = 5;
+  }
+}
+
+const player = new Player(
+  (canvasWidth - radius) / 2,
+  (canvasHeight - radius) / 2,
+  radius
+);
+
 class Particle {
   constructor(oX, oY) {
     this.x = (canvasWidth - radius) / 2;
@@ -31,6 +46,17 @@ class Object {
     this.y = Math.floor(Math.random() * canvas.height);
     this.w = 15;
     this.h = 15;
+    this.v = 3;
+
+    this.vectorX = -(this.x - (canvasWidth - radius) / 2);
+    this.vectorY = -(this.y - (canvasHeight - radius) / 2);
+
+    this.vectorNormalized = Math.sqrt(
+      this.vectorX * this.vectorX + this.vectorY * this.vectorY
+    );
+
+    this.vx = (this.vectorX / this.vectorNormalized) * this.v;
+    this.vy = (this.vectorY / this.vectorNormalized) * this.v;
   }
 }
 
@@ -63,13 +89,7 @@ const collisions = [];
 const drawPlayer = () => {
   ctx.fillStyle = "blue";
   ctx.beginPath();
-  ctx.arc(
-    (canvasWidth - radius) / 2,
-    (canvasHeight - radius) / 2,
-    radius,
-    0,
-    2 * Math.PI
-  );
+  ctx.arc(player.x, player.y, player.r, 0, 2 * Math.PI);
   ctx.fill();
 };
 
@@ -85,7 +105,7 @@ const drawParticles = () => {
 const drawObjects = () => {
   objects.forEach((o) => {
     ctx.fillStyle = "green";
-    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.fillRect((o.x += o.vx), (o.y += o.vy), o.w, o.h);
   });
 };
 
@@ -137,16 +157,20 @@ const drawCollisions = () => {
   });
 };
 
+const checkPlayerCollision = () => {
+  for (let i = 0; i < objects.length; i++) {
+    const res = RectCircleColliding(player, objects[i]);
+    if (res) {
+      objects.splice(i, 1);
+      player.health--;
+    }
+  }
+};
+
 const times = [];
 let fps;
-const frame = () => {
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-  drawParticles();
-  drawObjects();
-  checkCollision();
-  drawCollisions();
-  drawPlayer();
 
+const drawFPS = () => {
   const now = performance.now();
   while (times.length > 0 && times[0] <= now - 1000) {
     times.shift();
@@ -157,7 +181,34 @@ const frame = () => {
   ctx.font = "15px serif";
   ctx.fillStyle = "#000";
   ctx.fillText(`FPS : ${fps}`, 10, 20);
-  requestAnimationFrame(frame);
+};
+
+const frame = () => {
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+  if (player.health === 0) {
+    ctx.font = "48px serif";
+    ctx.fillStyle = "#000";
+    const text = "YOU LOST";
+
+    const textWidth = ctx.measureText(text).width;
+
+    ctx.fillText(
+      `YOU LOST`,
+      (canvasWidth - textWidth) / 2,
+      canvasHeight / 2 + 24
+    );
+  } else {
+    drawParticles();
+    drawObjects();
+    checkCollision();
+    drawCollisions();
+    checkPlayerCollision();
+    drawPlayer();
+
+    drawFPS();
+    requestAnimationFrame(frame);
+  }
 };
 
 canvas.addEventListener("click", (e) => {
