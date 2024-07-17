@@ -82,9 +82,9 @@ class Collision {
 }
 
 const particles = [];
-const objects = [];
+let objects = [];
 
-const collisions = [];
+let collisions = [];
 
 const drawPlayer = () => {
   ctx.fillStyle = "blue";
@@ -183,6 +183,28 @@ const drawScore = () => {
 
   ctx.fillText(text, (canvasWidth - textWidth) / 2, 30);
 };
+const restartW = 100;
+const restartH = 50;
+const restartX = (canvasWidth - restartW) / 2;
+const restartY = canvasHeight - 180;
+
+const drawEndGame = () => {
+  ctx.font = "48px serif";
+  ctx.fillStyle = "#000";
+  let text = "YOU LOST";
+
+  let textWidth = ctx.measureText(text).width;
+  ctx.fillText(text, (canvasWidth - textWidth) / 2, canvasHeight / 2);
+
+  // button box
+  ctx.strokeRect(restartX, restartY, restartW, restartH);
+
+  // button text
+  ctx.font = "bold 20px serif";
+  text = "RESTART";
+  textWidth = ctx.measureText(text).width;
+  ctx.fillText(text, (canvasWidth - textWidth) / 2, canvasHeight - 150);
+};
 
 const times = [];
 let fps;
@@ -200,21 +222,14 @@ const drawFPS = () => {
   ctx.fillText(`FPS : ${fps}`, 10, 20);
 };
 
+let gameEnded = false;
+
 const frame = () => {
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-  if (player.health === 0) {
-    ctx.font = "48px serif";
-    ctx.fillStyle = "#000";
-    const text = "YOU LOST";
-
-    const textWidth = ctx.measureText(text).width;
-
-    ctx.fillText(
-      `YOU LOST`,
-      (canvasWidth - textWidth) / 2,
-      canvasHeight / 2 + 24
-    );
+  if (player.health === 0) gameEnded = true;
+  if (gameEnded) {
+    //player.health === 0
+    drawEndGame();
   } else {
     drawParticles();
     drawObjects();
@@ -231,7 +246,24 @@ const frame = () => {
 };
 
 canvas.addEventListener("click", (e) => {
-  particles.push(new Particle(e.offsetX, e.offsetY));
+  if (gameEnded) {
+    const mouseX = e.offsetX;
+    const mouseY = e.offsetY;
+    if (
+      mouseX >= restartX &&
+      mouseX <= restartX + restartW &&
+      mouseY >= restartY &&
+      mouseY <= restartY + restartH
+    ) {
+      gameEnded = false;
+      player.health = 5;
+      collisions = [];
+      objects = [];
+      frame();
+    }
+  } else {
+    particles.push(new Particle(e.offsetX, e.offsetY));
+  }
 });
 
 addEventListener("keydown", (e) => {
