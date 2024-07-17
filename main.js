@@ -1,5 +1,4 @@
 import "./style.css";
-const explosionAudio = document.getElementById("explosion");
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -9,12 +8,18 @@ const canvasHeight = canvas.height;
 
 const radius = 20;
 
+const keys = [];
+
 class Player {
   constructor(x, y, r) {
     this.x = x;
     this.y = y;
     this.r = r;
+    this.speed = 5;
+    this.vx = 0;
+    this.vy = 0;
     this.health = 5;
+    this.friction = 0.8;
   }
 }
 
@@ -91,6 +96,30 @@ const drawPlayer = () => {
   ctx.beginPath();
   ctx.arc(player.x, player.y, player.r, 0, 2 * Math.PI);
   ctx.fill();
+};
+
+const movePlayer = () => {
+  if (keys["ArrowUp"]) {
+    player.vy--;
+  }
+
+  if (keys["ArrowDown"]) {
+    player.vy++;
+  }
+
+  if (keys["ArrowLeft"]) {
+    player.vx--;
+  }
+
+  if (keys["ArrowRight"]) {
+    player.vx++;
+  }
+
+  player.x += player.vx;
+  player.y += player.vy;
+
+  player.vx *= player.friction;
+  player.vy *= player.friction;
 };
 
 const drawParticles = () => {
@@ -228,7 +257,6 @@ const frame = () => {
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   if (player.health === 0) gameEnded = true;
   if (gameEnded) {
-    //player.health === 0
     drawEndGame();
   } else {
     drawParticles();
@@ -239,7 +267,7 @@ const frame = () => {
     drawHealth();
     drawScore();
     drawPlayer();
-
+    movePlayer();
     drawFPS();
     requestAnimationFrame(frame);
   }
@@ -267,20 +295,25 @@ canvas.addEventListener("click", (e) => {
 });
 
 addEventListener("keydown", (e) => {
-  switch (e.key) {
-    case "ArrowUp":
-      player.y -= 5;
-      break;
-    case "ArrowDown":
-      player.y += 5;
-      break;
-    case "ArrowLeft":
-      player.x -= 5;
-      break;
-    case "ArrowRight":
-      player.x += 5;
-      break;
-  }
+  keys[e.key] = true;
+});
+
+addEventListener("keyup", (e) => {
+  keys[e.key] = false;
+  // switch (e.key) {
+  //   case "ArrowUp":
+  //     player.y -= 5;
+  //     break;
+  //   case "ArrowDown":
+  //     player.y += 5;
+  //     break;
+  //   case "ArrowLeft":
+  //     player.x -= 5;
+  //     break;
+  //   case "ArrowRight":
+  //     player.x += 5;
+  //     break;
+  // }
 });
 
 setInterval(() => {
